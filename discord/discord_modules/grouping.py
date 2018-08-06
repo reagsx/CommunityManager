@@ -1,25 +1,41 @@
 import asyncio
-
+import json
 import discord
 from discord import channel
 from discord.ext import commands
-
 
 class grouping:
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.has_role('Officer')
     @commands.command(pass_context = True)
-    async def groups(self, ctx, voice_channel_id):
-        #First getting the voice channel object
-        voice_channel = discord.utils.get(ctx.message.server.channels, id = voice_channel_id)
-        if not voice_channel:
-            return await self.bot.say("That is not a valid voice channel.")
+    async def groups(self, ctx, pa_groups: int = 2):
+        #Load Group Names from JSON and convert into a list
+        with open("/home/chris/Community_Manager/settings/discord_settings.json") as cfg:
+            settings = json.load(cfg)
 
-        list_of_group_names = ['Defense','Flex 1','Flex 2']
+        if pa_groups > 10:
+            return await self.bot.say("Try a number less than 10 for PA groups.")
+
+        pa_list = []
+
+        groups        = settings["settings"]["groups"]
+        list_of_group_names = [x for x in groups.split(",")]
 
         group_dict = {'group_list':[],}
+        member_role_dict = {}
+        pa_groups_dict = {}
 
+        def get_channels():
+            ''' Searches for all Voice Channels in server and returns a list of voice channels'''
+            voice_channel_list = []
+            for server in self.bot.servers:
+                for channel in server.channels:
+                    if channel.type == discord.ChannelType.voice:
+                        if channel.name != 'AFK':
+                            voice_channel_list.append(channel)
+            return voice_channel_list
 
         def build_group_helper(name, role_list):
             '''The function will add a name to group dictionary in the first group
@@ -28,27 +44,25 @@ class grouping:
                name (str): name of discord member
                role_list (list): list of roles
                '''
-
-            for group in list_of_group_names:
-                if group.lower() in role_list:
-                    return group_dict[group].append(name)
-            return group_dict['group_list'].append(name)
-
+            if "member" in role_list:
+                if "pa" in role_list:
+                    pa_list.append(name)
+                for group in list_of_group_names:
+                    if group.lower() in role_list:
+                        return group_dict[group].append(name)
+                return group_dict['group_list'].append(name)
 
         def build_dict(group_names):
             for group in group_names:
                 if group not in group_dict:
                     group_dict[group] = []
 
-
-        def build_group_dict():
+        def build_group_dict(channel_list):
             build_dict(list_of_group_names)
-            members = voice_channel.voice_members
-            member_role_dict = {}
-
-            for member in members:
-                member_role_dict[member.display_name] = [x.name.lower() for x in member.roles]
-
+            for channel in channel_list:
+                members = channel.voice_members
+                for member in members:
+                    member_role_dict[member.display_name] = [x.name.lower() for x in member.roles]
             for key in member_role_dict:
                 build_group_helper(key, member_role_dict.get(key))
 
@@ -65,34 +79,31 @@ class grouping:
                 for x in range(5):
                     try:
                         group_dict['Group ' + str(group_number+1)].append(players.pop())
-                    except Exception as e:
+                    except Exception:
                         print('Out of Players')
                         break
 
         def pa_group():
-            pa_list = []
+            for i in range(pa_groups):
+                pa_groups_dict['PA Group ' + str(i+1)] = []
 
-            members = voice_channel.voice_members
-            for m_role_check in members:
-                member_role = m_role_check.roles
-                if "pa" in [x.name.lower() for x in member_role]:
-                    pa_list.append(m_role_check.display_name)
+            while len(pa_list) > 0:
+                for x in range(pa_groups):
+                    if len(pa_list) > 0:
+                        pa_groups_dict['PA Group ' + str(x+1)].append(pa_list.pop())
 
-            half = len(pa_list)//2
-            group_1 = pa_list[:half]
-            group_2 = pa_list[half:]
-            return "\n**Group 1: **" + ', '.join(group_1) +\
-            "\n**Group 2: **" + ', '.join(group_2)
 
-        def groups():
-            build_group_dict()
+        def format_groups():
+            build_group_dict(get_channels())
             build_groups()
+            pa_group()
             return "\n\n".join("**{}:** {}".format(key,', '.join(value)) for (key,value) in group_dict.items())\
-        + '\n\n__**PA Groups**__' + pa_group()
+            + '\n\n\n\n__**PA Groups**__\n\n' + "\n\n".join("**{}:** {}".format(key, ', '.join(value)) for (key,value) in pa_groups_dict.items())
+            
 
 
-        embed = discord.Embed(title = "Group setup for all members in {}".format(voice_channel.name),
-                              description = groups(),
+        embed = discord.Embed(title = "Group setup for all members in Discord",
+                              description = format_groups(),
                               color=discord.Color.blue())
 
         return await self.bot.say(embed = embed)

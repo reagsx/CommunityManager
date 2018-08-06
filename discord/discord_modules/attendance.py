@@ -10,12 +10,11 @@ class attendance:
         self.bot = bot
 
     # Attendance Command
+    @commands.has_role('Officer')
     @commands.command(pass_context = True)
-    async def attendance(self, event_name):
-        
-        def format_names(total_list):
-            return '\n'.join(total_list)
+    async def attendance(self):
 
+        event_name = "Node War"
 
         def get_channels():
             voice_channel_list = []
@@ -31,12 +30,16 @@ class attendance:
             for channel in channel_list:
                 members = channel.voice_members
                 for person in members:
-                    list_of_people.append(person.display_name)
+                    if 'member' in [x.name.lower() for x in person.roles]:
+                        list_of_people.append(person.display_name)
             return sorted(list_of_people)
+        
+        def format_names(total_list):
+            return '\n'.join(total_list)
 
         all_members = get_display_names(get_channels())
         sqlhelpers.attendance_helper(str(event_name), all_members)
-        await self.bot.say(str(len(all_members)) + ' members currently on Server: \n' + format_names(all_members))
+        await self.bot.say(str(len(all_members)) + ' members currently on Server: \n' + '```' + format_names(all_members) + '```')
 
 def setup(bot):
     bot.add_cog(attendance(bot))

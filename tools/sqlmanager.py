@@ -63,8 +63,6 @@ def add_attendance(family_name):
         (SELECT EventID FROM EventList WHERE EventDate = %s));"
         cursor.execute(query, (family_name, todaydate))
         mariadb_connection.commit()
-    else:
-        print('Already Added')
 
 def add_today_event(event_name='Nodewar'):
     mariadb_connection = mariadb.connect(user=username, password=password,database=database)

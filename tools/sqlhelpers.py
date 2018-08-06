@@ -18,7 +18,6 @@ def attendance_helper(event_name, list_of_names):
     for d_name in list_of_names:
         for fam_name in guild_list:
             if fam_name.lower() in d_name.lower():
-                print(fam_name)
                 sqlmanager.add_attendance(fam_name)
 
 def json_ready_guild_list():
