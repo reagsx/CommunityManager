@@ -7,18 +7,15 @@ from tools import sqlhelpers
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/")
-def helloWorld():
-  return "Hello, cross-origin-world!"
-
-
-@app.route('/guildlist')
+@app.route('/guildlist', methods=['GET'])
 def get_guildlist():
   return jsonify(sqlhelpers.json_ready_guild_list())
 
-@app.route('/attendance')
+@app.route('/attendance', methods=['GET'])
 def get_attendance():
-  return jsonify(sqlhelpers.get_attendance_list())
+  startdate = request.args.get('startdate')
+  enddate = request.args.get('enddate')
+  return jsonify(sqlhelpers.get_attendance_list(startdate,enddate))
 
 @app.route('/events')
 def get_events():
