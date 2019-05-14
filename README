@@ -1,9 +1,3 @@
 Community Manager
 
-Uses the Discord API do attendance and grouping for community use, discord bot is written in Python.
-
-Stores the attendance data from discord in SQL uses PyMySQL for SQL interaction.
-
-Flask used to build an API, which then is used by js to populate a table on website.
-
-Project is still in development as features are fleshed out and developed.
+Reworking the idea from the ground up...

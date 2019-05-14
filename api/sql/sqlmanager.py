@@ -2,9 +2,8 @@ import pymysql as mariadb
 import datetime
 import sys
 import json
-sys.path.insert(0, "/home/chris/Community_Manager")
 
-with open("/home/chris/Community_Manager/settings/sql_settings.json") as cfg:
+with open("./sql_settings.json") as cfg:
     settings = json.load(cfg)
 
 username     = settings["settings"]["user"]
